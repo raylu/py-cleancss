@@ -235,6 +235,9 @@ Convert all files in a directory""".format(version, copyright), formatter_class=
                             args.input_files.append(open(full_name, "r"))
             except Exception as e:
                 parser.error(e)
+        
+        if not len(args.input_files):
+            parser.error("No input files!")
 
         for file in args.input_files:
             try:
