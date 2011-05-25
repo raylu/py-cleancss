@@ -117,12 +117,24 @@ Example::
 Command line usage
 ------------------
 Call the cleancss module without parameters to show the usage instructions.
-Pass any number of files to cleancss and the script will convert the files to CSS
-and print the result to the console.
+Pass any number of files to cleancss and the script will convert the files to CSS.
 
 Example::
 
-	python -m cleancss file.ccss > result.css
+	python -m cleancss file.ccss
+	Wrote file.css
+
+If you need to supply special output files, that's also possible:
+
+	python -m cleancss file.ccss file_two.ccss -o styles.css other_styles.css
+	Wrote styles.css
+	Wrote other_styles.css
+
+You can also supply an entire directory to convert::
+
+	python -m cleancss -d project/stylesheets/
+	Wrote foo.css
+	Wrote bar.css
 
 LICENSE
 -------

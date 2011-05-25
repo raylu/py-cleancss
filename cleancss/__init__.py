@@ -19,6 +19,7 @@ import re
 import callbacks
 
 version = '1.4'
+copyright = '(c) 2010 Massimiliano Torromeo'
 __all__ = ['convert']
 
 class ParserError(Exception):
@@ -188,18 +189,71 @@ def convert(sourcestream, callback=None):
     return parser.toCss()
 
 def main():
-    if len(sys.argv) <= 1:
-        print """Usage: %s <file 1> [ <file 2> ... <file n>]
+    import argparse, os, os.path
 
-Version %s
-(c) 2010 Massimiliano Torromeo""" % (sys.argv[0], version)
-    else:
-        for filename in sys.argv[1:]:
+    parser = argparse.ArgumentParser(description="""Convert CleanCSS files to CSS.
+
+Version {}
+{}
+
+Example usage:
+
+> %(prog)s one.ccss two.ccss
+Writes output to one.css and two.css
+
+> %(prog)s one.ccss two.ccss -o file.css file_two.css
+Writes output to file.css and file_two.css
+
+> %(prog)s -d ~/project/css
+Convert all files in a directory""".format(version, copyright), formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument("input_files", nargs="*", type=argparse.FileType('r'), help="one or more .ccss files", metavar="file")
+    parser.add_argument("-d", "--dir", help="specify a directory of .ccss files to convert. Overrides any other input files, and ignores -o/--out", metavar="directory")
+    parser.add_argument("-r", "--recursive", action="store_true", default=False, help="look for .ccss files in subdirectories")
+    parser.add_argument("-o", "--out", nargs="+", default=[], type=argparse.FileType('w'), help="files to write output to", metavar="file")
+    parser.add_argument("--version", action="version", version="""CleanCSS {} - {}""".format(version, copyright))
+
+    try:
+        args = parser.parse_args()
+
+        # if a directory is supplied, override other files
+        if args.dir:
+            args.out = []
+            args.input_files = []
             try:
-                with open(filename) as f:
-                    print convert(f)
-            except (IOError, ParserError) as e:
-                sys.exit(e)
+                if args.recursive:
+                    # walk the directory, find all .ccss files and open them
+                    for root, dirs, files in os.walk(os.path.expanduser(args.dir)):
+                        for file in files:
+                            if os.path.splitext(file)[1] == ".ccss":
+                                args.input_files.append(open(os.path.join(root, file), "r"))
+                else:
+                    # list the directory, find .ccss files and open them
+                    for item in os.listdir(args.dir):
+                        full_name = os.path.join(args.dir, item)
+                        if os.path.splitext(item)[1] == ".ccss" and os.path.isfile(full_name):
+                            args.input_files.append(open(full_name, "r"))
+            except Exception as e:
+                parser.error(e)
+
+        for file in args.input_files:
+            try:
+                css = convert(file)
+                
+                # check if there are any output files to use
+                if len(args.out):
+                    out_file = args.out.pop(0)
+                else:
+                    # if not, use file name but with .css instead of .ccss
+                    name, _ = os.path.splitext(file.name)
+                    out_file = open(name + ".css", "w")
+                out_file.write(css)
+                print "Wrote", out_file.name
+                out_file.close()
+            except ParserError as e:
+                print "Error in", os.path.basename(file.name) + ":", e
+    except Exception as e:
+        parser.error(e)
 
 if __name__ == '__main__':
     main()
