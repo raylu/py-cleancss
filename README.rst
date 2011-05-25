@@ -124,7 +124,7 @@ Example::
 	python -m cleancss file.ccss
 	Wrote file.css
 
-If you need to supply special output files, that's also possible:
+If you need to supply special output files, that's also possible::
 
 	python -m cleancss file.ccss file_two.ccss -o styles.css other_styles.css
 	Wrote styles.css
