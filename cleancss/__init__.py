@@ -16,7 +16,7 @@ Example::
 """
 import sys
 import re
-import callbacks
+from . import callbacks
 
 version = '1.4'
 copyright = '(c) 2010 Massimiliano Torromeo'
@@ -251,10 +251,10 @@ Convert all files in a directory""".format(version, copyright), formatter_class=
                     name, _ = os.path.splitext(file.name)
                     out_file = open(name + ".css", "w")
                 out_file.write(css)
-                print "Wrote", out_file.name
+                print("Wrote", out_file.name)
                 out_file.close()
             except ParserError as e:
-                print "Error in", os.path.basename(file.name) + ":", e
+                print("Error in", os.path.basename(file.name) + ":", e)
     except Exception as e:
         parser.error(e)
 

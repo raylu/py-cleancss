@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest, cleancss
 from textwrap import dedent
-from StringIO import StringIO
+from io import StringIO
 
 class TestConvert(unittest.TestCase):
     def test_01_convert(self):
