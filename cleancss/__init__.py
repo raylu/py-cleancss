@@ -106,7 +106,9 @@ class Parser(object):
             if indenter>0 and len(indentation) % indenter != 0:
                 raise ParserError(lineno, 'Indentation error')
 
-            newlevel = len(indentation) / indenter if indenter > 0  else 0
+            newlevel = 0
+            if indenter > 0:
+                newlevel = len(indentation) / indenter
             line = line.strip()
 
             if newlevel-level>1:
@@ -138,7 +140,12 @@ class Parser(object):
                 if len(cur_rule_tree) == 0:
                     raise ParserError(lineno, 'Selector expected, found definition')
                 if selectorsChanged:
-                    selectors = ',\n'.join( self.flattenSelectors(cur_rule_tree) )
+                    if cur_rule_tree[0][0].startswith('@media'):
+                        new_selectors = self.flattenSelectors(cur_rule_tree[1:])
+                        selectors = (cur_rule_tree[0][0], ',\n'.join(new_selectors))
+                    else:
+                        new_selectors = self.flattenSelectors(cur_rule_tree)
+                        selectors = ',\n'.join(new_selectors)
                     rules.append((selectors, []))
                     selectorsChanged = False
                 if len(rule_prefixes)>0:
@@ -160,7 +167,24 @@ class Parser(object):
 
             raise ParserError(lineno, 'Unexpected item')
 
-        return ''.join( [ "%s {\n\t%s\n}\n" % (selectors, '\n\t'.join(definitions)) for selectors, definitions in rules ] )
+        output = []
+        media_query = None
+        for selectors, definitions in rules:
+            if isinstance(selectors, tuple):
+                rendered_defns = '\n\t\t'.join(definitions)
+                if selectors[0] != media_query:
+                    media_query = selectors[0]
+                    output.append('%s {\n' % selectors[0])
+                output.append('\t%s {\n\t\t%s\n\t}\n' % (selectors[1], rendered_defns))
+            else:
+                if media_query is not None:
+                    output.append('}\n')
+                    media_query = None
+                rendered_defns = '\n\t'.join(definitions)
+                output.append('%s {\n\t%s\n}\n' % (selectors, rendered_defns))
+        if media_query is not None:
+            output.append('}\n')
+        return ''.join(output)
 
     def registerPropertyCallback(self, callback):
         """
